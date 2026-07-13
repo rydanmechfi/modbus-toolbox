@@ -62,6 +62,29 @@ this map was reverse-engineered read-only. See **Findings** below.
 | 125 | 86 | 8.6 | 124.7 psi ✓ |
 | 145 (cutout) | 100 | 10.0 | 145.0 psi ✓ |
 
+### Maintenance service intervals (0x500 config page)
+
+The service **setpoints** are stored; the panel "count" (hours remaining) is
+**computed, not stored** — it equals `setpoint − working_hours`, which is why
+CAF/COF read 2162 (= 3000 − 838) and CSF reads 5162 (= 6000 − 838) at 838
+working hours.
+
+| Reg dec | Reg hex | Value | Item (by panel menu order) | Panel setpoint |
+|---|---|---|---|---|
+| 1312 | 0x0520 | 3000 | **CAF** air filter | 3000 h |
+| 1313 | 0x0521 | 3000 | **COF** oil filter | 3000 h |
+| 1314 | 0x0522 | 6000 | **CSF** oil-separator filter | 6000 h |
+| 1315 | 0x0523 | 3000 | 4th item (oil?) | 3000 h |
+| 1316 | 0x0524 | 3000 | 5th item | 3000 h |
+| 1317 | 0x0525 | 29999 | 6th item (~30000 h, major/bearings?) | — |
+
+To compute remaining hours: `setpoint(reg1312/1313/1314) − working_hours
+(reg1537 ÷ 60)`. This is exact until an item is **reset** on the panel; after a
+reset the per-item elapsed baseline (currently 0, since none have been reset)
+diverges from total working hours. That baseline register is currently 0 and
+so not yet identifiable — it can be found by watching for the register that
+jumps 0 → ~(working hours) during a live maintenance reset.
+
 ## Suspected / unresolved (leads, NOT confirmed)
 
 - **1024, 1025, 1026** — small integers that wobble with machine state; likely
@@ -73,10 +96,13 @@ this map was reverse-engineered read-only. See **Findings** below.
 - **1034** — packed status word (0x0100 / 0x0F01 / 0x0D01 / 0x0D21); changes at
   load/unload. Bitfield, not decoded.
 - **1541, 1543, 1545, 1547, 1549** — mirror the working-minutes value (1537).
-- **Oil-service hours (panel: 2162 h) NOT located.** 2162 h = 129 720 min,
-  which overflows a 16-bit minutes register (max 65 535), so it is not stored
-  like reg1537/1539 — likely a 32-bit pair or an hours-unit register elsewhere,
-  or a maintenance countdown. Still to be found.
+- **Maintenance "count" (2162 / 5162 h) is not a stored register** — resolved:
+  it is `setpoint − working_hours` computed by the panel (see the Maintenance
+  section above). Only the setpoints (1312–1317) and working hours (1537) are
+  stored.
+- **Per-item maintenance reset baselines** — presumed to exist (one per service
+  item) but all read 0 (nothing reset yet), so not yet identifiable. Capture by
+  watching a live panel reset.
 
 ## Values still worth hunting (visible on the LCD for correlation)
 
