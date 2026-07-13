@@ -3,3 +3,10 @@ __pycache__/
 .venv/
 venv/
 *.csv
+
+# macOS junk
+.DS_Store
+
+# Vendor PDF manuals — kept local, not committed to this public repo
+# (use `git add -f` if you ever deliberately want to track one)
+*.pdf
