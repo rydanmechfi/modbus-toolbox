@@ -39,8 +39,11 @@ Panel access: hold **SET** 3 s → `PAS` → password (param F90, default **55**
 
 ## Scaling
 
-Temperature resolution is 0.1° — expect ×10 integers. Panel °C/°F setting
-may affect the reported unit; verify against the display.
+**Confirmed live 2026-07-13:** temperatures arrive as whole-degree integers in
+the **panel's display unit** — this unit is set to °F and reg 0 read 37 (37 °F
+dew point), reg 1 read 118 (118 °F condenser), matching the display. No ×10
+scaling was observed despite the manual's "0.1° resolution" note. If the panel
+is switched to °C, expect the registers to follow.
 
 ## Behavior notes
 

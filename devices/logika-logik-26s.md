@@ -37,8 +37,15 @@ this map was reverse-engineered read-only. See **Findings** below.
 | **1029** | 0x0405 | **Airend / oil temperature** | **÷10 = °C** | cooldown + heat-up curves; reg=790 matched panel 174.2 °F (79.0 °C) |
 | **1030** | 0x0406 | **Working (line) pressure** | **÷10 = bar** (reg × 1.45 = psi) | 6-point correlation vs the gauge across an 88→145 psi build |
 | **1037** | 0x040d | **Load / compressing flag** | 1000 = loaded, 0 = unloaded | 0→1000 at load start, 1000→0 at 145 psi cutout |
-| **1537** | 0x0601 | **Working time** | **minutes** (÷60 = hours) | 50273 min = 837.9 h ≈ panel **837 working hours**; +1/min while running |
-| **1539** | 0x0603 | **Load time** | **minutes** (÷60 = hours) | 31917 min = 531.9 h ≈ panel **531 load hours** |
+| **1536–1537** | 0x0600–0x0601 | **Working time** | **32-bit, minutes** (÷60 = hours), high word 1536 / low word 1537 | 50273 min = 837.9 h ≈ panel **837 working hours**; +1/min while running |
+| **1538–1539** | 0x0602–0x0603 | **Load time** | **32-bit, minutes** (÷60 = hours), high word 1538 / low word 1539 | 31917 min = 531.9 h ≈ panel **531 load hours** |
+
+> ⚠️ **Read the hour counters as a block starting at the pair base (1536 /
+> 1538).** Single-register FC03 reads of 1537 or 1539 alone return 0 —
+> confirmed live 2026-07-13 with ESPHome polling. A 2-register read from 1536
+> (U_DWORD, high word first) returns the correct value, verified against the
+> panel: 838.2 h working / 532.1 h load. The scanner never tripped on this
+> because `dump` always reads whole blocks from the 0x600 base.
 
 ### reg1027 status enum (observed)
 
