@@ -107,8 +107,9 @@ suspected), scaling, quirks. PRs-to-self welcome. Current inventory:
 
 - [`vevor-tr02-tr03-air-dryer.md`](devices/vevor-tr02-tr03-air-dryer.md) —
   fully documented (from OEM manual)
-- [`logika-logik-26s.md`](devices/logika-logik-26s.md) — scan pending;
-  everything known so far
+- [`logika-logik-26s.md`](devices/logika-logik-26s.md) — screw-compressor
+  controller, **partially mapped** (pressure, airend temp, status, load flag,
+  working/load hours confirmed against the panel 2026-07-12)
 
 ## License
 
