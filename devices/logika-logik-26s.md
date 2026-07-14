@@ -76,14 +76,23 @@ The service **setpoints** are stored; the panel "count" (hours remaining) is
 CAF/COF read 2162 (= 3000 − 838) and CSF reads 5162 (= 6000 − 838) at 838
 working hours.
 
-| Reg dec | Reg hex | Value | Item (by panel menu order) | Panel setpoint |
+Item names confirmed 2026-07-13 against the EMAX PRS0100001 manual's
+"Maintenance Notifications" table, which lists the components in the same
+order as the panel menu:
+
+| Reg dec | Reg hex | Programmed value | Item (per EMAX manual) | EMAX manual lifetime |
 |---|---|---|---|---|
-| 1312 | 0x0520 | 3000 | **CAF** air filter | 3000 h |
-| 1313 | 0x0521 | 3000 | **COF** oil filter | 3000 h |
-| 1314 | 0x0522 | 6000 | **CSF** oil-separator filter | 6000 h |
-| 1315 | 0x0523 | 3000 | 4th item (oil?) | 3000 h |
-| 1316 | 0x0524 | 3000 | 5th item | 3000 h |
-| 1317 | 0x0525 | 29999 | 6th item (~30000 h, major/bearings?) | — |
+| 1312 | 0x0520 | 3000 | **CAF** air filter | 4000 h |
+| 1313 | 0x0521 | 3000 | **COF** oil filter | 4000 h |
+| 1314 | 0x0522 | 6000 | **CSF** air/oil separator filter | 4000 h |
+| 1315 | 0x0523 | 3000 | **C--=** lubricating oil | 4000 h |
+| 1316 | 0x0524 | 3000 | **C--h** check compressor | 4000 h |
+| 1317 | 0x0525 | 29999 | **BL** motor bearing grease | 10000 h |
+
+> ⚠️ The values programmed into the Logik (3000/3000/6000/3000/3000/29999 —
+> apparently Logika defaults) do **not** match the EMAX manual's schedule
+> (4000 ×5, 10000). The panel will raise its service nags on the programmed
+> values, first at 3000 h, unless they are edited on the panel.
 
 To compute remaining hours: `setpoint(reg1312/1313/1314) − working_hours
 (reg1537 ÷ 60)`. This is exact until an item is **reset** on the panel; after a
