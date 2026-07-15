@@ -48,22 +48,30 @@ is switched to °C, expect the registers to follow.
 ## Behavior notes
 
 - Compressor has built-in protection: F20 = 60 s power-on start delay,
-  F21 = 180 s anti-short-cycle — safe to switch reg 16 remotely.
-- ⚠️ **Register 16 writes are gated by F60 "System control mode"** (0 = Local
-  control [factory default], 1 = Remote control) — confirmed against the OEM
-  manual (now in `Shop_Assistant/equipment-manuals/Vevor Air Dryer
-  English.pdf`, §6.2/parameter table) and live on the bench 2026-07-14: with
-  F60 at its default of 0, every FC06 write to reg 16 is rejected with
-  **Modbus exception 3 (illegal data value)** — reads to every other register
-  work fine throughout, so this looked like a wiring fault before the manual
-  surfaced it. **Set F60 = 1 on the panel before attempting to control power
-  via Modbus.**
-- **F58 "Remote switch type"** (default 1 = normally closed) governs the S1
-  terminal (see wiring diagram, §7: S1 = "Remote switch (RED)"), and per the
-  manual is "invalid when F60 is set to local control" — implying S1 only
-  matters once F60 = 1. Unconfirmed whether S1 must *also* be satisfied
-  (e.g. jumpered closed) for reg-16 writes to hold once F60 = 1, or whether
-  Modbus alone is sufficient — test F60 = 1 alone first before wiring S1.
+  F21 = 180 s anti-short-cycle.
+- **Register 16 writes require F60 "System control mode" = 1 (Remote
+  control)** — factory default is 0 (Local control), documented in the OEM
+  manual (`Shop_Assistant/equipment-manuals/Vevor Air Dryer English.pdf`,
+  §6.2/parameter table). Set this on the panel before attempting to control
+  power via Modbus at all.
+- ⚠️ **The real root cause of a long "on writes always fail, off writes
+  always work" debugging session (2026-07-14/15) turned out to be on the
+  ESPHome side, not the dryer.** ESPHome's `modbus_controller` switch writes
+  `state ? 0xFFFF & bitmask : 0` for FC06, and defaults `bitmask` to
+  `0xFFFFFFFF` when unset — so a switch on this register with **no explicit
+  `bitmask` wrote the literal value 65535 for "on"**, which the dryer
+  correctly rejected as out of range (**Modbus exception 3**) for a register
+  documented to accept only 0/1. "Off" (a real `0`) always succeeded, which
+  is what made this look like a device-side permission problem for so long.
+  **Any switch on this register needs `bitmask: 0x0001` explicitly set** —
+  see the fix in
+  [Shop_Assistant/shop-controller.yaml](https://github.com/rydanmechfi/Shop_Assistant/blob/main/shop-controller.yaml).
+- Ruled out along the way, kept here so it isn't re-investigated: **F58
+  "Remote switch type" and the S1 terminal do not gate reg-16 writes** —
+  tested with S1 both unwired and physically jumpered closed, under both
+  F58 = 1 (NC) and F58 = 0 (NO); no combination changed the outcome once the
+  bitmask bug above was the actual blocker. The panel's own local shutdown
+  toggle (hold ∨+∧ 3 s, §4.4) was also checked and isn't the cause either.
 - Front-panel alarm codes (A11 pressure, A21/A22 sensor, A31 dew point,
   A32 condensation) surface in the reg 7 bitfield.
 - ESPHome integration example (modbus_controller with
